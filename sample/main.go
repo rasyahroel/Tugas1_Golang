@@ -14,66 +14,85 @@ import (
 var db *sql.DB
 var err error
 
-type Pasien struct {
-	No_ktp        string `json:"No_ktp"`
-	Nama          string `json:"Nama"`
-	Jenis_kelamin string `json:"Jenis_kelamin"`
-	Alamat        string `json:"Alamat"`
-	Status        string `json:"Status"`
-	Lama_menginap string `json:"Lama_menginap"`
+// Customer struct (Model) ...
+type Customer struct {
+	CustomerID   string `json:"CustomerID"`
+	CompanyName  string `json:"CompanyName"`
+	ContactName  string `json:"ContactName"`
+	ContactTitle string `json:"ContactTitle"`
+	Address      string `json:"Address"`
+	City         string `json:"City"`
+	Region       string `json:"Region"`
+	PostalCode   string `json:"PostalCode"`
+	Country      string `json:"Country"`
+	Phone        string `json:"Phone"`
+	Fax          string `json:"Fax"`
 }
 
-func getPasiens(w http.ResponseWriter, r *http.Request) {
+// Get all orders
+
+func getCustomers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var pasiens []Pasien
+	var customers []Customer
 
 	sql := `SELECT
-				No_ktp,
-				IFNULL(Nama,''),
-				IFNULL(Jenis_kelamin,'') Jenis_kelamin,
-				IFNULL(Alamat,'') Alamat,
-				IFNULL(Status,'') Status,
-				IFNULL(Lama_menginap,'') Lama_menginap
-			FROM pasiens`
+				CustomerID,
+				IFNULL(CompanyName,''),
+				IFNULL(ContactName,'') ContactName,
+				IFNULL(ContactTitle,'') ContactTitle,
+				IFNULL(Address,'') Address,
+				IFNULL(City,'') City,
+				IFNull(Region,'') Region,
+				IFNULL(PostalCode,'') PostalCode
+				IFNULL(Country,'') Country,
+				IFNULL(Phone,'') Phone ,
+				IFNULL(Fax,'') Fax
+			FROM customers`
 
 	result, err := db.Query(sql)
 
 	defer result.Close()
 
 	if err != nil {
-		log.Fatal(err.Error())
-		// panic(err.Error())
+		panic(err.Error())
 	}
 
 	for result.Next() {
 
-		var pasien Pasien
-		err := result.Scan(&pasien.No_ktp, &pasien.Nama, &pasien.Jenis_kelamin,
-			&pasien.Alamat, &pasien.Status, &pasien.Lama_menginap)
+		var customer Customer
+		err := result.Scan(&customer.CustomerID, &customer.CompanyName, &customer.ContactName,
+			&customer.ContactTitle, &customer.Address, &customer.City, &customer.Country, &customer.Region,
+			&customer.Phone, &customer.PostalCode)
 
 		if err != nil {
 			panic(err.Error())
 		}
-		pasiens = append(pasiens, pasien)
+		customers = append(customers, customer)
 	}
 
-	json.NewEncoder(w).Encode(pasiens)
+	json.NewEncoder(w).Encode(customers)
 }
-func createPasiens(w http.ResponseWriter, r *http.Request) {
+
+func createCustomer(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "POST" {
 
-		No_ktp := r.FormValue("No_ktp")
-		Nama := r.FormValue("Nama")
-		Jenis_kelamin := r.FormValue("Jenis_kelamin")
-		Alamat := r.FormValue("Alamat")
-		Status := r.FormValue("Status")
-		Lama_menginap := r.FormValue("Lama_menginap")
+		customerID := r.FormValue("CustomerID")
+		companyName := r.FormValue("CompanyName")
+		contactName := r.FormValue("ContactName")
+		contactTitle := r.FormValue("ContactTitle")
+		address := r.FormValue("Address")
+		city := r.FormValue("City")
+		country := r.FormValue("Country")
+		region := r.FormValue("Region")
+		phone := r.FormValue("Phone")
+		postalCode := r.FormValue("PostalCode")
+		fax := r.FormValue("Fax")
 
-		stmt, err := db.Prepare("INSERT INTO pasien (No_ktp,Nama,Jenis_kelamin,Alamat,Status,Lama_menginap) VALUES (?,?,?,?,?,?)")
+		stmt, err := db.Prepare("INSERT INTO customers (CustomerID,CompanyName,ContactName,ContactTitle,Address,City,Country,Region,Phone,PostalCode,Fax) VALUES (?,?,?,?,?,?,?,?,?,?)")
 
-		_, err = stmt.Exec(No_ktp, Nama, Jenis_kelamin, Alamat, Status, Lama_menginap)
+		_, err = stmt.Exec(customerID, companyName, contactName, contactTitle, address, city, country, region, phone, postalCode, fax)
 
 		if err != nil {
 			fmt.Fprintf(w, "Data Duplicate")
@@ -83,19 +102,25 @@ func createPasiens(w http.ResponseWriter, r *http.Request) {
 
 	}
 }
-func getPasien(w http.ResponseWriter, r *http.Request) {
+
+func getCustomer(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var pasiens []Pasien
+	var customers []Customer
 	params := mux.Vars(r)
 
 	sql := `SELECT
-				No_ktp,
-				IFNULL(Nama,''),
-				IFNULL(Jenis_kelamin,'') Jenis_kelamin,
-				IFNULL(Alamat,'') Alamat,
-				IFNULL(Status,'') Status,
-				IFNULL(Lama_menginap,'') Lama_menginap,
-			FROM pasiens WHERE No_ktp = ?`
+				CustomerID,
+				IFNULL(CompanyName,''),
+				IFNULL(ContactName,'') ContactName,
+				IFNULL(ContactTitle,'') ContactTitle,
+				IFNULL(Address,'') Address,
+				IFNULL(City,'') City,
+				IFNULL(Country,'') Country,
+				IFNULL(Region,'') Region,
+				IFNULL(Phone,'') Phone ,
+				IFNULL(PostalCode,'') PostalCode,
+				IFNULL(Fax, '') Fax
+			FROM customers WHERE CustomerID = ?`
 
 	result, err := db.Query(sql, params["id"])
 
@@ -105,65 +130,119 @@ func getPasien(w http.ResponseWriter, r *http.Request) {
 
 	defer result.Close()
 
-	var pasien Pasien
+	var customer Customer
 
 	for result.Next() {
 
-		err := result.Scan(&pasien.No_ktp, &pasien.Nama, &pasien.Jenis_kelamin,
-			&pasien.Alamat, &pasien.Status, &pasien.Lama_menginap)
+		err := result.Scan(&customer.CustomerID, &customer.CompanyName, &customer.ContactName,
+			&customer.ContactTitle, &customer.Address, &customer.City, &customer.Country, &customer.Region,
+			&customer.Phone, &customer.PostalCode, &customer.Fax)
 
 		if err != nil {
 			panic(err.Error())
 		}
 
-		pasiens = append(pasiens, pasien)
+		customers = append(customers, customer)
 	}
 
-	json.NewEncoder(w).Encode(pasiens)
+	json.NewEncoder(w).Encode(customers)
 }
-func updatePasiens(w http.ResponseWriter, r *http.Request) {
+
+func updateCustomer(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == "PUT" {
 
 		params := mux.Vars(r)
 
-		newNama := r.FormValue("Nama")
-		newJenis_kelamin := r.FormValue("Jenis_kelamin")
-		newAlamat := r.FormValue("Alamat")
-		newStatus := r.FormValue("Status")
-		newLama_menginap := r.FormValue("Lama_menginap")
+		newCompanyName := r.FormValue("CompanyName")
+		newContactName := r.FormValue("ContactName")
+		newContactTitle := r.FormValue("ContactTitle")
+		newAddress := r.FormValue("Address")
+		newCity := r.FormValue("City")
+		newRegion := r.FormValue("Region")
+		newCountry := r.FormValue("Country")
+		newPostalCode := r.FormValue("PostalCode")
+		newPhone := r.FormValue("Phone")
+		newFax := r.FormValue("Fax")
 
-		stmt, err := db.Prepare("UPDATE pasien SET Nama = ?, Jenis_kelamin = ?, Alamat = ?, Status = ?, Lama_menginap = ? WHERE No_ktp = ?")
+		stmt, err := db.Prepare("UPDATE customers SET CompanyName = ?, ContactName = ?, ContactTitle = ?, Address = ?, City = ?, Region = ?, Country = ?, PostalCode = ?, Phone = ?, Fax = ?  WHERE CustomerID = ?")
 
-		_, err = stmt.Exec(newNama, newJenis_kelamin, newAlamat, newStatus, newLama_menginap, params["id"])
+		_, err = stmt.Exec(newCompanyName, newContactName, newContactTitle, newAddress, newCity, newRegion, newCountry, newPostalCode, newPhone, newFax, params["id"])
 
 		if err != nil {
 			fmt.Fprintf(w, "Data not found or Request error")
 		}
 
-		fmt.Fprintf(w, "Pasien with No_ktp = %s was updated", params["id"])
+		fmt.Fprintf(w, "Customer with CustomerID = %s was updated", params["id"])
 	}
 }
-func delPasiens(w http.ResponseWriter, r *http.Request) {
 
-	No_ktp := r.FormValue("No_ktp")
-	Nama := r.FormValue("Nama")
+func deleteCustomer(w http.ResponseWriter, r *http.Request) {
 
-	stmt, err := db.Prepare("DELETE FROM pasien WHERE No_ktp = ? AND Nama = ?")
+	params := mux.Vars(r)
+	stmt, err := db.Prepare("DELETE FROM customers WHERE CustomerID = ?")
 
-	_, err = stmt.Exec(No_ktp, Nama)
+	_, err = stmt.Exec(params["id"])
 
 	if err != nil {
 		fmt.Fprintf(w, "delete failed")
 	}
 
-	fmt.Fprintf(w, "Pasien with ID = %s was deleted", No_ktp)
+	fmt.Fprintf(w, "Customer with ID = %s was deleted", params["id"])
+}
+
+func getPost(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	var customers []Customer
+
+	CustomerID := r.FormValue("CustomerID")
+	CompanyName := r.FormValue("CompanyName")
+
+	sql := `SELECT
+				CustomerID,
+				IFNULL(CompanyName,''),
+				IFNULL(ContactName,'') ContactName,
+				IFNULL(ContactTitle,'') ContactTitle,
+				IFNULL(Address,'') Address,
+				IFNULL(City,'') City,
+				IFNULL(Country,'') Country,
+				IFNULL(Phone,'') Phone ,
+				IFNULL(PostalCode,'') PostalCode
+			FROM customers WHERE CustomerID = ? AND CompanyName = ?`
+
+	result, err := db.Query(sql, CustomerID, CompanyName)
+
+	if err != nil {
+		panic(err.Error())
+	}
+
+	defer result.Close()
+
+	var customer Customer
+
+	for result.Next() {
+
+		err := result.Scan(&customer.CustomerID, &customer.CompanyName, &customer.ContactName,
+			&customer.ContactTitle, &customer.Address, &customer.City, &customer.Country,
+			&customer.Phone, &customer.PostalCode)
+
+		if err != nil {
+			panic(err.Error())
+		}
+
+		customers = append(customers, customer)
+	}
+
+	json.NewEncoder(w).Encode(customers)
+
 }
 
 // Main function
 func main() {
 
-	db, err = sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/mutia")
+	db, err = sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/northwind")
 	if err != nil {
 		panic(err.Error())
 	}
@@ -174,14 +253,15 @@ func main() {
 	r := mux.NewRouter()
 
 	// Route handles & endpoints
+	r.HandleFunc("/customers", getCustomers).Methods("GET")
+	r.HandleFunc("/customers/{id}", getCustomer).Methods("GET")
+	r.HandleFunc("/customers", createCustomer).Methods("POST")
+	r.HandleFunc("/customers/{id}", updateCustomer).Methods("PUT")
+	r.HandleFunc("/customers/{id}", deleteCustomer).Methods("DELETE")
 
 	//New
-	r.HandleFunc("/pasiens", getPasiens).Methods("GET")
-	r.HandleFunc("/pasiens/{id}", getPasien).Methods("GET")
-	r.HandleFunc("/pasiens", createPasiens).Methods("POST")
-	r.HandleFunc("/delpasiens", delPasiens).Methods("POST")
-	r.HandleFunc("/pasiens/{id}", updatePasiens).Methods("PUT")
+	r.HandleFunc("/getcustomer", getPost).Methods("POST")
 
 	// Start server
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(":4321", r))
 }
