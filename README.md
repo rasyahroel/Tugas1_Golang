@@ -1,2 +1,4 @@
 ﻿# Tugas 1 Golang
-# Nama : Ramanda Syahputra No BP : 1811082009 Kelas : TRPL3A
+Nama  : Ramanda Syahputra
+No BP : 1811082009
+Kelas : TRPL3A
